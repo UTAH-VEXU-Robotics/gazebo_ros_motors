@@ -6,6 +6,7 @@
 #include <ignition/math/Vector3.hh>
 #include <sdf/sdf.hh>
 #include <ros/ros.h>
+#include <std_msgs/Float64.h>
 
 #include "gazebo_ros_dc_motor/gazebo_ros_dc_motor.h"
 
@@ -75,7 +76,7 @@ void GazeboRosMotor::Load ( physics::ModelPtr _parent, sdf::ElementPtr _sdf ) {
     if ( this->update_rate_ > 0.0 ) this->update_period_ = 1.0 / this->update_rate_; else this->update_period_ = 0.0;
     last_update_time_ = parent->GetWorld()->SimTime();
     ROS_INFO_NAMED("motor_plugin", "%s: Trying to subscribe to %s", gazebo_ros_->info(), command_topic_.c_str());
-    ros::SubscribeOptions so = ros::SubscribeOptions::create<std_msgs::Float32> (
+    ros::SubscribeOptions so = ros::SubscribeOptions::create<std_msgs::Float64> (
         command_topic_,
         1,
         boost::bind(&GazeboRosMotor::cmdVelCallback, this, _1),
@@ -86,7 +87,7 @@ void GazeboRosMotor::Load ( physics::ModelPtr _parent, sdf::ElementPtr _sdf ) {
     ROS_INFO_NAMED("motor_plugin", "%s: Subscribed to %s", gazebo_ros_->info(), command_topic_.c_str());
     // encoder publishers
     if (this->publish_velocity_){
-      velocity_publisher_ = gazebo_ros_->node()->advertise<std_msgs::Float32>(velocity_topic_, 1);
+      velocity_publisher_ = gazebo_ros_->node()->advertise<std_msgs::Float64>(velocity_topic_, 1);
       ROS_INFO_NAMED("motor_plugin", "%s: Advertising motor shaft (before gearbox) velocity on %s ", gazebo_ros_->info(), velocity_topic_.c_str());
     }
     if (this->publish_encoder_){
@@ -94,7 +95,7 @@ void GazeboRosMotor::Load ( physics::ModelPtr _parent, sdf::ElementPtr _sdf ) {
       ROS_INFO_NAMED("motor_plugin", "%s: Advertising encoder counts on %s ", gazebo_ros_->info(), encoder_topic_.c_str());
     }
     if (this->publish_current_){
-      current_publisher_ = gazebo_ros_->node()->advertise<std_msgs::Float32>(current_topic_, 1);
+      current_publisher_ = gazebo_ros_->node()->advertise<std_msgs::Float64>(current_topic_, 1);
       ROS_INFO_NAMED("motor_plugin", "%s: Advertising actual motor current on %s ", gazebo_ros_->info(), current_topic_.c_str());
     }
     // if (this->publish_wrench_){
@@ -138,7 +139,7 @@ void GazeboRosMotor::publishWheelJointState() {
 
 // Velocity publisher
 void GazeboRosMotor::publishRotorVelocity(double m_vel){
-  std_msgs::Float32 vel_msg;
+  std_msgs::Float64 vel_msg;
   vel_msg.data = m_vel; // (rad/sec)
   if (this->publish_velocity_) velocity_publisher_.publish(vel_msg);
 }
@@ -153,7 +154,7 @@ void GazeboRosMotor::publishEncoderCount(double m_vel, double dT){
 }
 
 void GazeboRosMotor::publishMotorCurrent(){
-  std_msgs::Float32 c_msg;
+  std_msgs::Float64 c_msg;
   c_msg.data = internal_current_; // (amps)
   if (this->publish_current_) current_publisher_.publish(c_msg);
 }
@@ -247,7 +248,7 @@ void GazeboRosMotor::FiniChild() {
 }
 
 // Callback from custom que
-void GazeboRosMotor::cmdVelCallback ( const std_msgs::Float32::ConstPtr& cmd_msg ) {
+void GazeboRosMotor::cmdVelCallback ( const std_msgs::Float64::ConstPtr& cmd_msg ) {
     input_ = cmd_msg->data;
 }
 
